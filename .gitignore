@@ -3,3 +3,6 @@
 
 # Rust output
 /target
+
+# Rust cargo lock
+/Cargo.lock
