@@ -20,12 +20,12 @@ impl<'a> PmtWord<'a> {
     pub fn new(word: impl Into<Cow<'a, str>>, cut: u8) -> Result<Self, &'static str> {
         let word = word.into();
         if (cut as usize) > word.len() {
-            return Err("Cut point too far, word too short");
+            Err("Cut point too far, word too short")
+        } else if cut == 0 {
+            Err("Cut cannot be zero")
+        } else {
+            Ok(PmtWord { word, end_at: cut })
         }
-        if cut == 0 {
-            return Err("Cut cannot be zero");
-        }
-        Ok(PmtWord { word, end_at: cut })
     }
     // pub fn word(&self) -> String {
     //     self.word.clone()
