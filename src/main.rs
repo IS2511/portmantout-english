@@ -178,7 +178,7 @@ fn build_pmt_from_lifetime<'a>(words: &[String]) -> PmtTreeWord<'a> {
         // fixme: I impl empty `FromIterator` - add logic
         .collect()
     // or with return `Err` into function (change signature)
-    // Result<PmtTreeWord, _> = words
+    // words
     //     .iter()
     //     .map(|word| {
     //         u8(word.len())
