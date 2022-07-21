@@ -110,8 +110,8 @@ impl<'a> PmtTreeWord<'a> {
     }
 }
 
-impl<'a> FromIterator<PmtWord> for PmtTreeWord {
-    fn from_iter<I: IntoIterator<Item = PmtWord>>(_: I) -> Self {
+impl<'a> FromIterator<PmtWord<'a>> for PmtTreeWord<'_> {
+    fn from_iter<I: IntoIterator<Item = PmtWord<'a>>>(_: I) -> Self {
         todo!("please impl me")
     }
 }
@@ -227,7 +227,7 @@ fn main() -> io::Result<()> {
     // suggest:
     // let words: io::Result<Vec<_>> = reader.lines().collect();
 
-    let pmt = build_pmt_from_static(words);
+    let pmt = build_pmt_from_lifetime(&words);
 
     for word in pmt {
         print!("{word} ");
