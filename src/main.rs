@@ -19,6 +19,7 @@ struct PmtWord<'a> {
 impl<'a> PmtWord<'a> {
     pub fn new(word: impl Into<Cow<'a, str>>, cut: u8) -> Result<Self, &'static str> {
         let word = word.into();
+        // I recommend create error type for this
         if (cut as usize) > word.len() {
             Err("Cut point too far, word too short")
         } else if cut == 0 {
@@ -65,6 +66,7 @@ struct PmtTreeWord<'a> {
     word_end: Vec<PmtTreeWord<'a>>,
 }
 
+// Impl Iterator for `PmtTreeWord` or add `.iter()`/`.into_iter()` methods
 impl Iterator for PmtTreeWord<'_> {
     // later use never type !
     type Item = Infallible;
@@ -89,6 +91,7 @@ impl<'a> PmtTreeWord<'a> {
         }
     }
 
+    // so strange logic
     pub fn push(&self, _: &str, prev_word_cut: u8) -> Result<&PmtTreeWord, &'static str> {
         if (prev_word_cut as usize) >= self.word.len() {
             return Err("cut point too far, previous word too short");
@@ -104,6 +107,12 @@ impl<'a> PmtTreeWord<'a> {
         } else {
             Some(self)
         }
+    }
+}
+
+impl<'a> FromIterator<PmtWord> for PmtTreeWord {
+    fn from_iter<I: IntoIterator<Item = PmtWord>>(_: I) -> Self {
+        todo!("please impl me")
     }
 }
 
@@ -140,23 +149,44 @@ fn build_pmt_from_iterator(
         .collect()
 }
 
-fn build_pmt_from_static(words: Vec<String>) -> PmtTreeWord<'static> {
-    // let mut pmt: PmtTreeWord =
-    //     PmtTreeWord::new_root(&words[rand::thread_rng().gen_range(0, words.len())]);
-    //
+// Not use owned vector to where it is not necessary to transfer ownership
+// also you can use `Cow<'a, str>` or `&str`
+// and rename function
+fn build_pmt_from_lifetime<'a>(words: &[String]) -> PmtTreeWord<'a> {
+    let mut pmt: PmtTreeWord =
+        PmtTreeWord::new_root(&words[rand::thread_rng().gen_range(0, words.len())]);
+
+    //for word in words {
+    //    let pmt_word = PmtTreeWord::new();
+    //}
+
+    // Instead of
     // for word in words {
-    //     let pmt_word = PmtTreeWord::new();
+    //     let pmt_word = PmtWord::new(word.clone(), word.len() as u8);
+    //     if pmt_word.is_ok() {
+    //         pmt.push(pmt_word.unwrap());
+    //     }
     // }
-    //
-    // // for word in words {
-    // //     let pmt_word = PmtWord::new(word.clone(), word.len() as u8);
-    // //     if pmt_word.is_ok() {
-    // //         pmt.push(pmt_word.unwrap());
-    // //     }
-    // // }
-    //
-    // return pmt;
-    todo!()
+    // use iterators with skip `Err`
+    words
+        .iter()
+        .flat_map(|word| u8(word.len()).map(|len| PmtWord::new(word, len)))
+        // fixme: i use two `flat_map` to ignore `Result<Result<PmtWord, Err1>, Err2>`
+        //  create custom `Error` type which has { usize to u8 } overflow case
+        //  and use `.flatten()`
+        .flat_map(|x| x)
+        // fixme: I impl empty `FromIterator` - add logic
+        .collect()
+    // or with return `Err` into function (change signature)
+    // Result<PmtTreeWord, _> = words
+    //     .iter()
+    //     .map(|word| {
+    //         u8(word.len())
+    //             // fixme: also create custom `Error` type
+    //             .map_err(|_| "u8 overflow")
+    //             .map(|len| PmtWord::new(word, len))
+    //     })
+    //     .collect()
 }
 
 fn print_help(this_name: &str) {
@@ -167,6 +197,7 @@ fn print_help(this_name: &str) {
 fn main() -> io::Result<()> {
     let args: Vec<_> = std::env::args().collect();
 
+    // Use the clap crate. Torment will not help you learn Rust
     for arg in args.iter() {
         if (arg == "--help") || (arg == "-h") {
             print_help(&args[0]);
