@@ -152,9 +152,9 @@ fn build_pmt_from_iterator(
 // Not use owned vector to where it is not necessary to transfer ownership
 // also you can use `Cow<'a, str>` or `&str`
 // and rename function
-fn build_pmt_from_lifetime<'a>(words: &[String]) -> PmtTreeWord<'a> {
-    let mut pmt: PmtTreeWord =
-        PmtTreeWord::new_root(&words[rand::thread_rng().gen_range(0, words.len())]);
+fn build_pmt_from_lifetime<'a>(words: &[Cow<'a, str>]) -> PmtTreeWord<'a> {
+    // let mut pmt: PmtTreeWord =
+    //     PmtTreeWord::new_root(&words[rand::thread_rng().gen_range(0, words.len())]);
 
     //for word in words {
     //    let pmt_word = PmtTreeWord::new();
@@ -170,7 +170,7 @@ fn build_pmt_from_lifetime<'a>(words: &[String]) -> PmtTreeWord<'a> {
     // use iterators with skip `Err`
     words
         .iter()
-        .flat_map(|word| u8(word.len()).map(|len| PmtWord::new(word, len)))
+        .flat_map(|word| u8(word.len()).map(|len| PmtWord::new(word.as_ref(), len)))
         // fixme: i use two `flat_map` to ignore `Result<Result<PmtWord, Err1>, Err2>`
         //  create custom `Error` type which has { usize to u8 } overflow case
         //  and use `.flatten()`
@@ -195,7 +195,7 @@ fn print_help(this_name: &str) {
 
 // fs can return error, don't ignore it
 fn main() -> io::Result<()> {
-    let args: Vec<_> = std::env::args().collect();
+    let args: Vec<_> = std::env::args().map(Cow::Owned).collect();
 
     // Use the clap crate. Torment will not help you learn Rust
     for arg in args.iter() {
@@ -211,17 +211,18 @@ fn main() -> io::Result<()> {
 
     let dict_filename = &args[1];
     // now instead of
-    let dict_file = File::open(dict_filename).expect("Couldn't open file.");
+    let dict_file = File::open(dict_filename.as_ref()).expect("Couldn't open file.");
     // you can write
     // let dict_file = File::open(dict_filename)?;
     let reader = BufReader::new(dict_file);
 
     // let words: Vec<String> = reader.lines().map(|line| line.unwrap()).collect();
     // your:
-    let mut words: Vec<String> = Vec::new();
+    let mut words: Vec<_> = Vec::new();
+    // please use iterators :)
     for line in reader.lines() {
         if let Ok(line) = line {
-            words.push(line);
+            words.push(Cow::Owned(line));
         }
     }
     // suggest:
